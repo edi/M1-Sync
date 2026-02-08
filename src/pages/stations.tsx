@@ -11,8 +11,7 @@ import {
 import {
 	Frown,
 	RefreshCw,
-	FolderSearch,
-	LoaderCircle
+	FolderSearch
 } from 'lucide-react'
 
 import {

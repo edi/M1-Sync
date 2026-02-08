@@ -3,7 +3,7 @@
   "iconLibrary": "lucide",
   "style": "new-york",
   "rsc": true,
-  "tsx": false,
+  "tsx": true,
   "tailwind": {
     "config": "",
     "css": "src/style.css",
