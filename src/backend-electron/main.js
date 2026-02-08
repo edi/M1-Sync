@@ -1,20 +1,15 @@
 import {app, BrowserWindow, shell, dialog, ipcMain} from 'electron'
 import squirrelStartup from 'electron-squirrel-startup'
 import {isMac, getAssetPath, isDev} from './utils'
-// import {createServer as httpServer} from 'http'
-// import {Server as ioServer} from 'socket.io'
 import {autoUpdater} from 'electron-updater'
 import settings from 'electron-settings'
 import MenuBuilder from './utils/menu'
 import AutoLaunch from 'auto-launch'
 import {fileURLToPath} from 'url'
 import path from 'path'
-// import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-
-process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = true
 
 if (squirrelStartup)
 	app.quit()
@@ -104,113 +99,6 @@ app.whenReady().then(() => {
 		} else {
 			mainWindow.show()
 		}
-	})
-
-	/*
-
-	let socketPort = 3000
-
-	socket server
-	const server = httpServer()
-	const io = new ioServer(server, {
-		cors: {
-			origin: '*',
-			methods: ['GET', 'POST']
-		}
-	})
-
-	console.log(fingerprint.toString())
-
-	// io connection
-	io.on('connection', socket => {
-
-		socket.on('request-stream', filePath => {
-
-			if (!fs.existsSync(filePath))
-				return socket.emit('error', 'File does not exist')
-
-			const stream = fs.createReadStream(filePath, {highWaterMark: 1024 * 1024})
-
-			stream.on('data', (chunk) => {
-				socket.emit('audio-stream', chunk)
-			})
-
-			stream.on('end', () => {
-				socket.emit('stream-end')
-			})
-
-		})
-
-	})
-
-	// server start
-	server.listen(socketPort)
-
-	// port in use check
-	server.on('error', (e) => {
-		if (e.code === 'EADDRINUSE') {
-			console.error('Address in use, retrying...')
-			setTimeout(() => {
-				server.close()
-				socketPort += 1
-				server.listen(socketPort)
-			}, 5000)
-		}
-	})
-
-	*/
-
-	autoUpdater.autoDownload = true
-	autoUpdater.checkForUpdatesAndNotify()
-
-	autoUpdater.on('checking-for-update', () => {
-    console.log('Checking for updates...')
-	})
-
-	autoUpdater.on('update-available', (info) => {
-		dialog.showMessageBox({
-			type: 'info',
-			title: 'Update Available',
-			message: `Version ${info.version} is available. Do you want to download it now?`,
-			buttons: ['Yes', 'No']
-		}).then(result => {
-			if (result.response === 0) { // If 'Yes' is clicked
-				autoUpdater.downloadUpdate()
-			}
-		})
-	})
-
-	autoUpdater.on('update-not-available', () => {
-		dialog.showMessageBox({
-			type: 'info',
-			title: 'No Updates',
-			message: 'You are using the latest version.',
-		})
-	})
-
-	autoUpdater.on('error', (err) => {
-		dialog.showMessageBox({
-			type: 'error',
-			title: 'Update Error',
-			message: `An error occurred: ${err.message}`
-		})
-	})
-
-	autoUpdater.on('download-progress', (progress) => {
-		console.log(`Downloaded ${Math.round(progress.percent)}%`)
-	})
-
-	autoUpdater.on('update-downloaded', () => {
-		dialog.showMessageBox({
-			type: 'info',
-			title: 'Update Ready',
-			message: 'The update has been downloaded. Restart the application to apply the update.',
-			buttons: ['Restart Now', 'Later']
-		}).then(result => {
-			if (result.response === 0) {
-				autoUpdater.quitAndInstall()
-			}
-		})
 	})
 
 	if (!isDev) {
