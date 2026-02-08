@@ -1,6 +1,9 @@
 import Toggle from '@/components/ui/toggle'
 import {RefreshCcwDot} from 'lucide-react'
 import {useState, useEffect} from 'react'
+import {getVersion} from '@tauri-apps/api/app'
+import {isEnabled} from '@tauri-apps/plugin-autostart'
+import {check} from '@tauri-apps/plugin-updater'
 
 export default function Preferences() {
 
@@ -16,8 +19,11 @@ export default function Preferences() {
 	useEffect(() => {
 
 		const init = async () => {
-			const preferences = await window.api.getPreferences()
-			setState(preferences)
+			const [appVersion, autoStartup] = await Promise.all([
+				getVersion(),
+				isEnabled()
+			])
+			setState({appVersion, autoStartup})
 		}
 
 		init()
@@ -32,7 +38,10 @@ export default function Preferences() {
 		setState({isChecking: true})
 
 		try {
-			window.api.checkForUpdates()
+			const update = await check()
+			if (update) {
+				await update.downloadAndInstall()
+			}
 		} catch (error) {
 			// do nothing
 		}

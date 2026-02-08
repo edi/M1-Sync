@@ -1,4 +1,4 @@
-import {validateAccessToken} from '@/lib/auth'
+import {validateAccessToken, getToken} from '@/lib/auth'
 import {useNavigate} from 'react-router-dom'
 import {useAuthStore} from '@/store/auth'
 import {useEffect} from 'react'
@@ -19,7 +19,7 @@ export default function Preload() {
 			let session
 
 			// check for token
-			const accessToken = await window.api.getToken()
+			const accessToken = await getToken()
 
 			// validate access token
 			if (accessToken) {

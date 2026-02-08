@@ -4,7 +4,6 @@
   "version": "0.1.0",
   "identifier": "com.musicone.sync",
   "build": {
-    "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist"
@@ -21,7 +20,16 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDcwMUY3NzQ4NjI4NEQ5M0YKUldRLzJZUmlTSGNmY0hic09xSTdmQU1IQWkvWVdtTG5OMXdQK0x5R1VSQjVPdEowT1l5UTVpU3kK",
+      "endpoints": [
+        "https://github.com/edi/M1-Sync/releases/latest/download/latest.json"
+      ]
+    }
+  },
   "bundle": {
+    "createUpdaterArtifacts": true,
     "active": true,
     "targets": "all",
     "icon": [

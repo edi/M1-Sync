@@ -2,6 +2,7 @@ import {useStationsStore} from '@/store/stations'
 import {cn} from '@/lib/utils'
 import {useEffect} from 'react'
 import {toast} from 'sonner'
+import {open} from '@tauri-apps/plugin-dialog'
 
 import {
 	syncPaths,
@@ -49,15 +50,12 @@ export default function Stations() {
 				newPath = pathname
 			} else {
 
-				const list = await window.api.openFolder()
+				const selected = await open({directory: true})
 
-				if (list.canceled)
+				if (!selected)
 					return false
 
-				if (!list.filePaths.length)
-					return false
-
-				newPath = list.filePaths[0]
+				newPath = selected
 
 			}
 

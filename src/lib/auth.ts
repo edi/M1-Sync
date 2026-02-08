@@ -1,6 +1,19 @@
 import {useAuthStore} from '@/store/auth'
 import {resetAllStores} from '@/store'
 import {api} from '@/lib/utils'
+import {load} from '@tauri-apps/plugin-store'
+
+const getStore = () => load('settings.json', {autoSave: true})
+
+export const saveToken = async (token) => {
+	const store = await getStore()
+	await store.set('accessToken', token)
+}
+
+export const getToken = async () => {
+	const store = await getStore()
+	return await store.get('accessToken')
+}
 
 /**
  * Check if session code is validated
@@ -57,7 +70,7 @@ export const signInUsingCredentials = async (fields) => {
 		throw new Error(response.error)
 
 	try {
-		await window.api.saveToken(response.accessToken)
+		await saveToken(response.accessToken)
 	} catch (err) {
 		// do nothing
 	}
@@ -92,7 +105,7 @@ export const validateAccessToken = async () => {
 
 	try {
 		if (response.accessToken)
-			await window.api.saveToken(response.accessToken)
+			await saveToken(response.accessToken)
 	} catch (err) {
 		console.error(err)
 		return null
@@ -112,7 +125,7 @@ export const signOut = async (navigate) => {
 	useAuthStore.setState({loader: true})
 
 	// clear token
-	await window.api.saveToken('')
+	await saveToken('')
 
 	// reset all states
 	setTimeout(() => {
