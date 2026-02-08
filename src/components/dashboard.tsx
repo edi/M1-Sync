@@ -1,9 +1,9 @@
 import {NavLink, Outlet, useLocation, useNavigate} from 'react-router-dom'
-import {fetch as fetchStations} from '@/frontend/lib/stations'
-import {useStationsStore} from '@/frontend/store/stations'
-import {useAuthStore} from '@/frontend/store/auth'
-import {signOut} from '@/frontend/lib/auth'
-import {cn, APP_TITLE} from '@/frontend/utils'
+import {fetch as fetchStations} from '@/lib/stations'
+import {useStationsStore} from '@/store/stations'
+import {cn, APP_TITLE} from '@/lib/utils'
+import {useAuthStore} from '@/store/auth'
+import {signOut} from '@/lib/auth'
 import logo from '/icon.svg'
 
 import {

@@ -1,5 +1,5 @@
 import {twMerge} from 'tailwind-merge'
-import {useAuthStore} from '../store/auth'
+import {useAuthStore} from '@/store/auth'
 import {clsx} from 'clsx'
 import ky from 'ky'
 

@@ -1,6 +1,6 @@
-import {validateAccessToken} from '../lib/auth'
+import {validateAccessToken} from '@/lib/auth'
 import {useNavigate} from 'react-router-dom'
-import {useAuthStore} from '../store/auth'
+import {useAuthStore} from '@/store/auth'
 import {useEffect} from 'react'
 
 export default function Preload() {

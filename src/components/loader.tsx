@@ -1,6 +1,6 @@
-import {useAuthStore} from '../store/auth'
+import {useAuthStore} from '@/store/auth'
+import {cn} from '@/lib/utils'
 import logo from '/icon.svg'
-import {cn} from '../lib/utils'
 
 export default function Loader() {
 

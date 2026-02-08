@@ -1,4 +1,4 @@
-import Toggle from '../components/ui/toggle'
+import Toggle from '@/components/ui/toggle'
 import {RefreshCcwDot} from 'lucide-react'
 import {useState, useEffect} from 'react'
 

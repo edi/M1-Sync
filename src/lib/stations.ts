@@ -1,4 +1,4 @@
-import {useStationsStore} from '../store/stations'
+import {useStationsStore} from '@/store/stations'
 import {toast} from 'sonner'
 import {api} from './utils'
 

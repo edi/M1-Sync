@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom"
+import {useLocation} from 'react-router-dom'
 
 export default function NotFound(){
 
@@ -7,4 +7,5 @@ export default function NotFound(){
   return (
     <div>page-not-found :: {location.pathname}</div>
   )
+
 }

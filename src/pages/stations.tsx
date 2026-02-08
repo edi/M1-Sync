@@ -1,12 +1,12 @@
-import {useStationsStore} from '@/frontend/store/stations'
-import {cn} from '@/frontend/utils'
+import {useStationsStore} from '@/store/stations'
+import {cn} from '@/lib/utils'
 import {useEffect} from 'react'
 import {toast} from 'sonner'
 
 import {
 	syncPaths,
 	fetch as fetchStations
-} from '@/frontend/lib/stations'
+} from '@/lib/stations'
 
 import {
 	Frown,
@@ -21,7 +21,7 @@ import {
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from '@/frontend/components/ui/select'
+} from '@/components/ui/select'
 
 export default function Stations() {
 

@@ -1,6 +1,6 @@
-import {useAuthStore} from '../store/auth'
-import {resetAllStores} from '../store'
-import {api} from './utils'
+import {useAuthStore} from '@/store/auth'
+import {resetAllStores} from '@/store'
+import {api} from '@/lib/utils'
 
 /**
  * Check if session code is validated

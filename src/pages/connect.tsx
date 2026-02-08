@@ -1,6 +1,6 @@
 import {writeText} from '@tauri-apps/plugin-clipboard-manager';
 import {useNavigate} from 'react-router-dom'
-import {useAuthStore} from '../store/auth'
+import {useAuthStore} from '@/store/auth'
 import useState from 'react-usestateref'
 import {QRCode} from 'react-qrcode-logo'
 import {useForm} from 'react-hook-form'
@@ -17,13 +17,13 @@ import {
 	verifySessionCode,
 	requestSessionCode,
 	signInUsingCredentials
-} from '../lib/auth'
+} from '@/lib/auth'
 
 import {
 	cn,
 	APP_URL,
 	APP_TITLE
-} from '../lib/utils'
+} from '@/lib/utils'
 
 export default function Home() {
 
