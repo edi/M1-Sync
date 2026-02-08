@@ -3,6 +3,7 @@
   "productName": "CloudSync",
   "version": "1.0.0-beta",
   "description": "MusicOne CloudSync Service",
+  "packageManager": "pnpm@10.29.1",
   "private": true,
   "type": "module",
   "scripts": {
