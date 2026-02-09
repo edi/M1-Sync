@@ -81,7 +81,7 @@ jobs:
           LABEL="${{ matrix.label }}"
           ARTIFACTS='${{ steps.build.outputs.artifactPaths }}'
 
-          echo "$ARTIFACTS" | jq -r '.[]' | while read -r artifact; do
+          echo "$ARTIFACTS" | jq -r '.[]' | tr -d '\r' | while IFS= read -r artifact; do
             filename=$(basename "$artifact")
             new_name=""
 
@@ -98,6 +98,12 @@ jobs:
               *.app.tar.gz)
                 new_name="M1-Sync-${VERSION}-${LABEL}.app.tar.gz"
                 ;;
+              *.nsis.zip.sig)
+                new_name="M1-Sync-${VERSION}-${LABEL}-Setup.nsis.zip.sig"
+                ;;
+              *.nsis.zip)
+                new_name="M1-Sync-${VERSION}-${LABEL}-Setup.nsis.zip"
+                ;;
               *-setup.exe.sig)
                 new_name="M1-Sync-${VERSION}-${LABEL}-Setup.exe.sig"
                 ;;
@@ -111,7 +117,7 @@ jobs:
 
             dir=$(dirname "$artifact")
             if [ "$new_name" != "$filename" ]; then
-              mv "$artifact" "${dir}/${new_name}"
+              mv -- "$artifact" "${dir}/${new_name}"
             fi
             gh release upload "$TAG" "${dir}/${new_name}" --clobber
           done
