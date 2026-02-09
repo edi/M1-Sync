@@ -38,6 +38,9 @@ jobs:
           - platform: windows-latest
             args: ''
             label: 'Windows-x64'
+          - platform: windows-latest
+            args: '--target aarch64-pc-windows-msvc'
+            label: 'Windows-ARM64'
     runs-on: ${{ matrix.platform }}
 
     steps:
@@ -53,7 +56,7 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin,x86_64-apple-darwin
+          targets: aarch64-apple-darwin,x86_64-apple-darwin,aarch64-pc-windows-msvc
 
       - run: pnpm install
 
@@ -144,6 +147,7 @@ jobs:
           MACOS_AARCH64_SIG=$(cat "./sigs/M1-Sync-${VERSION}-macOS-Apple-Silicon.app.tar.gz.sig")
           MACOS_X64_SIG=$(cat "./sigs/M1-Sync-${VERSION}-macOS-Intel.app.tar.gz.sig")
           WIN_NSIS_SIG=$(cat "./sigs/M1-Sync-${VERSION}-Windows-x64-Setup.exe.sig")
+          WIN_ARM64_NSIS_SIG=$(cat "./sigs/M1-Sync-${VERSION}-Windows-ARM64-Setup.exe.sig")
 
           cat > latest.json << ENDOFJSON
           {
@@ -174,6 +178,14 @@ jobs:
               "windows-x86_64-nsis": {
                 "signature": "${WIN_NSIS_SIG}",
                 "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-x64-Setup.exe"
+              },
+              "windows-aarch64": {
+                "signature": "${WIN_ARM64_NSIS_SIG}",
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-ARM64-Setup.exe"
+              },
+              "windows-aarch64-nsis": {
+                "signature": "${WIN_ARM64_NSIS_SIG}",
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-ARM64-Setup.exe"
               }
             }
           }
