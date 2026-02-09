@@ -82,6 +82,7 @@ jobs:
           ARTIFACTS='${{ steps.build.outputs.artifactPaths }}'
 
           echo "$ARTIFACTS" | jq -r '.[]' | tr -d '\r' | while IFS= read -r artifact; do
+            [ -d "$artifact" ] && continue
             filename=$(basename "$artifact")
             new_name=""
 
