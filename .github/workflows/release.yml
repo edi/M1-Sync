@@ -179,4 +179,4 @@ jobs:
           }
           ENDOFJSON
 
-          gh release upload "$TAG" latest.json --clobber
+          gh release upload "$TAG" latest.json --clobber -R "$REPO"
