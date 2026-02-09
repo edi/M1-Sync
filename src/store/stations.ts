@@ -1,6 +1,7 @@
 import {create} from 'zustand'
+import type {StationsState, Station} from '@/types'
 
-const initialState = {
+const initialState: Omit<StationsState, 'initialize' | 'setPaths' | 'setStations' | 'selectStation' | 'getSelectedStation'> = {
 	list: [],
 	paths: [],
 	loading: true,
@@ -8,15 +9,15 @@ const initialState = {
 	selectedStationId: null
 }
 
-export const useStationsStore = create(
+export const useStationsStore = create<StationsState>(
 	(set, get) => ({
 
 		...initialState,
 
-		initialize: (list) => {
+		initialize: (list: Station[]) => {
 
 			// Safely access localStorage only in browser environment
-			let stationId = null;
+			let stationId: number | null = null;
 
 			if (typeof window !== 'undefined') {
 				stationId = Number(localStorage.getItem('selected-station'))
@@ -39,12 +40,12 @@ export const useStationsStore = create(
 		},
 
 		// update paths list
-		setPaths: (paths) => {
+		setPaths: (paths: string[]) => {
 			set({paths})
 		},
 
 		// updates the stations list
-		setStations: (stations) => {
+		setStations: (stations: Station[]) => {
 
 			// return false
 
@@ -57,7 +58,7 @@ export const useStationsStore = create(
 		},
 
 		// Select a specific station
-		selectStation: (stationId) => {
+		selectStation: (stationId: number) => {
 			set({selectedStationId: stationId})
 			localStorage.setItem('selected-station', String(stationId))
 		},

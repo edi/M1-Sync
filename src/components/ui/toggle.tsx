@@ -1,7 +1,9 @@
-export default function Toggle({enabled, disabled, onChange, label, description}) {
+import type {ToggleProps} from '@/types'
+
+export default function Toggle({enabled, disabled, onChange, label, description}: ToggleProps) {
 
   const onClick = () => {
-    if (!disabled)
+    if (!disabled && onChange)
       onChange()
   }
 

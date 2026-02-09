@@ -2,17 +2,18 @@ import {useAuthStore} from '@/store/auth'
 import {resetAllStores} from '@/store'
 import {api} from '@/lib/utils'
 import {load} from '@tauri-apps/plugin-store'
+import type {LoginResponse, SessionCodeResponse} from '@/types'
 
-const getStore = () => load('settings.json', {autoSave: true})
+const getStore = () => load('settings.json', {autoSave: true, defaults: {}})
 
-export const saveToken = async (token) => {
+export const saveToken = async (token: string) => {
 	const store = await getStore()
 	await store.set('accessToken', token)
 }
 
 export const getToken = async () => {
 	const store = await getStore()
-	return await store.get('accessToken')
+	return await store.get<string>('accessToken')
 }
 
 /**
@@ -20,7 +21,7 @@ export const getToken = async () => {
  * @param {string} code Unique session identifier
  * @param {function} callback Function to trigger when request finished processing
  */
-export const verifySessionCode = async (code, callback) => {
+export const verifySessionCode = async (code: string | null, callback: () => void) => {
 
 	if (!code) {
 		callback()
@@ -29,13 +30,12 @@ export const verifySessionCode = async (code, callback) => {
 
 	try {
 
-		const response = await api.get(`session/${code}`).json()
+		await api.get(`session/${code}`).json()
 		// TODO: save session
-		// console.log(response)
 
 	} catch (err) {
 		// do nothing
-		console.log(err.message)
+		console.log(err instanceof Error ? err.message : err)
 	} finally {
 		callback()
 	}
@@ -45,11 +45,10 @@ export const verifySessionCode = async (code, callback) => {
 /**
  * Request unique session code
  * @param {function} onSuccess Method to call on success
- * @returns {string}
  */
-export const requestSessionCode = async onSuccess => {
+export const requestSessionCode = async (onSuccess: (code: string) => void) => {
 
-	const response = await api.get('session/new').json()
+	const response = await api.get('session/new').json<SessionCodeResponse>()
 
 	// trigger callback
 	onSuccess(response.sessionCode)
@@ -59,19 +58,18 @@ export const requestSessionCode = async onSuccess => {
 /**
  * Sign in using credentials
  * @param {object} fields User credentials
- * @param {function} navigate Navigator
  */
-export const signInUsingCredentials = async (fields) => {
+export const signInUsingCredentials = async (fields: {email: string; password: string}) => {
 
 	// get jwt
-	const response = await api.post('customer/login', {json: fields}).json()
+	const response = await api.post('customer/login', {json: fields}).json<LoginResponse>()
 
 	if (response.error)
 		throw new Error(response.error)
 
 	try {
 		await saveToken(response.accessToken)
-	} catch (err) {
+	} catch {
 		// do nothing
 	}
 
@@ -95,7 +93,7 @@ export const signInUsingCredentials = async (fields) => {
 export const validateAccessToken = async () => {
 
 	// check jwt
-	const response = await api.get('token/verify').json()
+	const response = await api.get('token/verify').json<LoginResponse>()
 
 	if (response.error)
 		return response.error
@@ -119,7 +117,7 @@ export const validateAccessToken = async () => {
  * User sign out
  * @param {function} navigate Navigator
  */
-export const signOut = async (navigate) => {
+export const signOut = async (navigate: (path: string) => void) => {
 
 	// show loader
 	useAuthStore.setState({loader: true})

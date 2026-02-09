@@ -19,7 +19,7 @@ export default function Dashboard() {
 	const navigate = useNavigate()
 	const location = useLocation()
 
-	const {loading, list} = useStationsStore(state => state)
+	const {loading} = useStationsStore(state => state)
 	const name = useAuthStore(state => state.name)
 
 	return (

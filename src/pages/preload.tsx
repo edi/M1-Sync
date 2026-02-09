@@ -34,7 +34,7 @@ export default function Preload() {
 
 			user.showLoader(false)
 
-			if (!session?.id)
+			if (!session || typeof session === 'string' || !session.id)
 				navigate('/connect')
 
 		}

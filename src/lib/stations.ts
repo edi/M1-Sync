@@ -1,6 +1,7 @@
 import {useStationsStore} from '@/store/stations'
 import {toast} from 'sonner'
 import {api} from './utils'
+import type {StationsListResponse, SyncPathsResponse} from '@/types'
 
 export const fetch = async () => {
 
@@ -10,23 +11,23 @@ export const fetch = async () => {
 		useStationsStore.setState({loading: true})
 
 		// fetch stations
-		const response = await api.get('stations').json()
+		const response = await api.get('stations').json<StationsListResponse>()
 
-		if ('error' in response)
+		if (response.error)
 			throw new Error(response.error)
 
 		// set stations
 		useStationsStore.getState().setStations(response.list)
 
 	} catch (err) {
-		toast.error(err.message, {position: 'bottom-right'})
+		toast.error(err instanceof Error ? err.message : 'Failed to fetch stations', {position: 'bottom-right'})
 	} finally {
 		useStationsStore.setState({loading: false})
 	}
 
 }
 
-export const syncPaths = async (data) => {
+export const syncPaths = async (data: {stationId: number | null; newPath: string}) => {
 
 	try {
 
@@ -37,21 +38,22 @@ export const syncPaths = async (data) => {
 		})
 
 		// sync paths
-		const response = await api.post('stations/sync', {json: {data}}).json()
+		const response = await api.post('stations/sync', {json: {data}}).json<SyncPathsResponse>()
 
-		if ('error' in response)
+		if (response.error)
 			throw new Error(response.error)
 
 		// set paths
-		if (response.paths && typeof response.paths === 'object' && response.paths.length)
+		if (response.paths && Array.isArray(response.paths) && response.paths.length)
 			useStationsStore.getState().setPaths(response.paths)
 
 		// return response
-		return {success: true}
+		return {success: true} as const
 
 	} catch (err) {
-		toast.error(err.message, {position: 'bottom-right'})
-		return {error: err.message}
+		const message = err instanceof Error ? err.message : 'Failed to sync paths'
+		toast.error(message, {position: 'bottom-right'})
+		return {error: message} as const
 	} finally {
 		useStationsStore.setState({
 			loading: false,

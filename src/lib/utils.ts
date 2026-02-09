@@ -1,6 +1,6 @@
 import {twMerge} from 'tailwind-merge'
 import {useAuthStore} from '@/store/auth'
-import {clsx} from 'clsx'
+import {type ClassValue, clsx} from 'clsx'
 import ky from 'ky'
 
 export const APP_URL = import.meta.env.VITE_APP_URL
@@ -14,7 +14,7 @@ export const api = ky.extend({
 			request => {
 				// todo: device fingerprint
 				// access token
-				request.headers.set('Authorization', useAuthStore.getState().accessToken)
+				request.headers.set('Authorization', useAuthStore.getState().accessToken ?? '')
 			}
 		]
 	}
@@ -25,21 +25,21 @@ export const api = ky.extend({
  * @param {int} ms Time to sleep in ms
  * @returns Promise
  */
-export const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 /**
  * Tailwind classnames merger
  * @param  {...any} inputs
  * @returns {string}
  */
-export const cn = (...inputs) => twMerge(clsx(inputs))
+export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs))
 
 /**
  * Generate random alphanumeric string
  * @param {integer} length Length of string
  * @returns {string}
  */
-export const createRandomString = length => {
+export const createRandomString = (length: number) => {
 
 	let result = ''
 	const chars = "ABCDEFGHIJKLMNPQRSTUVWXYZabcdefghijklmnpqrstuvwxyz0123456789"

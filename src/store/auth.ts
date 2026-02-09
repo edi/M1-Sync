@@ -1,6 +1,7 @@
 import {create} from 'zustand'
+import type {AuthState} from '@/types'
 
-const initialState = {
+const initialState: Omit<AuthState, 'showLoader' | 'setToken'> = {
 	id: null,
 	name: null,
 	email: null,
@@ -9,11 +10,11 @@ const initialState = {
 	accessToken: null
 }
 
-export const useAuthStore = create(
+export const useAuthStore = create<AuthState>(
 	(set) => ({
 		...initialState,
-		showLoader: status => set({loader: status}),
-		setToken: accessToken => set({accessToken})
+		showLoader: (status: boolean) => set({loader: status}),
+		setToken: (accessToken: string | null) => set({accessToken})
 	})
 )
 

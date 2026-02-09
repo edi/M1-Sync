@@ -25,19 +25,25 @@ import {
 	APP_TITLE
 } from '@/lib/utils'
 
+interface ConnectState {
+	loading: boolean | string
+	copied: boolean
+	code: string | null | false
+}
+
 export default function Home() {
 
-	const timer = useRef(null)
+	const timer = useRef<ReturnType<typeof setInterval> | null>(null)
 	const navigate = useNavigate()
 	const userId = useAuthStore(state => state.id)
 
-	const [state, changeState, stateRef] = useState({
+	const [state, changeState, stateRef] = useState<ConnectState>({
 		loading: false,
 		copied: false,
 		code: false
 	})
 
-	const setState = data => changeState(prevState => ({...prevState, ...data}))
+	const setState = (data: Partial<ConnectState>) => changeState(prevState => ({...prevState, ...data}))
 
 	// user connected listener
 	useEffect(() => {
@@ -51,26 +57,27 @@ export default function Home() {
 		if (state.code === false) {
 			setState({code: null}) // temporarily mark code as "loading"
 			try {
-				requestSessionCode(code => setState({code}))
+				requestSessionCode((code: string) => setState({code}))
 			} catch (err) {
 				// do nothing
-				console.log(err.message)
+				console.log(err instanceof Error ? err.message : err)
 			}
 		}
 
 		if (timer.current === null)
 			timer.current = setInterval(() => {
 
-				if (stateRef.loading)
+				if (stateRef.current.loading)
 					return false
 
 				setState({loading: 'qr'})
-				verifySessionCode(stateRef.current.code, () => setState({loading: false}))
+				verifySessionCode(stateRef.current.code || null, () => setState({loading: false}))
 
 			}, 10000)
 
 		return () => {
-			clearInterval(timer.current)
+			if (timer.current !== null)
+				clearInterval(timer.current)
 			timer.current = null
 		}
 
@@ -92,7 +99,7 @@ export default function Home() {
 
 	}, [state.copied])
 
-	const onSubmit = async data => {
+	const onSubmit = async (data: {email: string; password: string}) => {
 
 		if (state.loading && state.loading !== 'qr')
 			return false
@@ -102,11 +109,12 @@ export default function Home() {
 
 		try {
 
-			await signInUsingCredentials(data, navigate)
+			await signInUsingCredentials(data)
 			toast.success('Logged in successfully', {id: toastId})
 
 		} catch (err) {
-			toast.error(err.message || err.error, {id: toastId})
+			const message = err instanceof Error ? err.message : 'Authentication failed'
+			toast.error(message, {id: toastId})
 		} finally {
 			setState({loading: false})
 		}
@@ -114,7 +122,8 @@ export default function Home() {
 	}
 
 	const onCopyCode = async () => {
-		await writeText(state.code)
+		if (typeof state.code === 'string')
+			await writeText(state.code)
 		setState({copied: true})
 	}
 
@@ -197,7 +206,7 @@ export default function Home() {
 										</a>
 									</div>
 
-									<button type="submit" disabled={state.loading && state.loading !== 'qr'} className="flex w-full justify-center rounded-md bg-slate-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-xs hover:bg-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-600 disabled:opacity-70 disabled:pointer-events-none transition-all">
+									<button type="submit" disabled={!!state.loading && state.loading !== 'qr'} className="flex w-full justify-center rounded-md bg-slate-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-xs hover:bg-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-600 disabled:opacity-70 disabled:pointer-events-none transition-all">
 										Sign in
 									</button>
 
@@ -238,7 +247,7 @@ export default function Home() {
 						bgColor="transparent"
 						logoHeight={50}
 						logoWidth={50}
-						value={`${remoteConnectURL}/${state.code}`}
+						value={`${remoteConnectURL}/${state.code || ''}`}
 						style={{position: 'absolute', top: 0, left: 0}}
 					/>
 					<img src={logo} alt="" className={cn("z-10 w-16 h-16 border-[5px] border-gray-100 rounded-full", state.loading === 'qr' ? 'animate-spin' : '')} />

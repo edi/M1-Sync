@@ -5,16 +5,23 @@ import {getVersion} from '@tauri-apps/api/app'
 import {isEnabled} from '@tauri-apps/plugin-autostart'
 import {check} from '@tauri-apps/plugin-updater'
 
+interface PreferencesState {
+	autoStartup: boolean
+	autoUpdate: boolean
+	appVersion: string | null
+	isChecking: boolean
+}
+
 export default function Preferences() {
 
-	const [state, changeState] = useState({
+	const [state, changeState] = useState<PreferencesState>({
 		autoStartup: false,
 		autoUpdate: true,
 		appVersion: null,
 		isChecking: false
 	})
 
-	const setState = data => changeState(prevState => ({...prevState, ...data}))
+	const setState = (data: Partial<PreferencesState>) => changeState(prevState => ({...prevState, ...data}))
 
 	useEffect(() => {
 
@@ -42,7 +49,7 @@ export default function Preferences() {
 			if (update) {
 				await update.downloadAndInstall()
 			}
-		} catch (error) {
+		} catch {
 			// do nothing
 		}
 

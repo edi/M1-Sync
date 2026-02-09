@@ -3,6 +3,7 @@ import {cn} from '@/lib/utils'
 import {useEffect} from 'react'
 import {toast} from 'sonner'
 import {open} from '@tauri-apps/plugin-dialog'
+import type {Station} from '@/types'
 
 import {
 	syncPaths,
@@ -37,14 +38,14 @@ export default function Stations() {
 			fetchStations()
 	}, [])
 
-	const onOpenFolder = async (pathname = null) => {
+	const onOpenFolder = async (pathname: string | null = null) => {
 
 		if (syncing)
 			return false
 
 		try {
 
-			let newPath
+			let newPath: string
 
 			if (pathname) {
 				newPath = pathname
@@ -64,23 +65,23 @@ export default function Stations() {
 				return toast.warning('Path already synced', {position: 'bottom-right'})
 
 			// check if other parent paths include this path
-			const parentPaths = paths.filter(path => newPath.includes(path))
+			const parentPaths = paths.filter((path: string) => newPath.includes(path))
 
 			if (parentPaths.length)
 				return toast.warning('Path already synced in parent path', {
 					position: 'bottom-right',
 					descriptionClassName: 'opacity-60 text-xs',
-					description: <ul>{parentPaths.map(item => <li key={item}>{item}</li>)}</ul>
+					description: <ul>{parentPaths.map((item: string) => <li key={item}>{item}</li>)}</ul>
 				})
 
 			// check if other paths are included in this path
-			const subPaths = paths.filter(path => path.includes(newPath))
+			const subPaths = paths.filter((path: string) => path.includes(newPath))
 
 			if (subPaths.length)
 				toast.warning('The following sub-paths will be removed', {
 					position: 'bottom-right',
 					descriptionClassName: 'opacity-60 text-xs',
-					description: <ul>{subPaths.map(item => <li key={item}>{item}</li>)}</ul>
+					description: <ul>{subPaths.map((item: string) => <li key={item}>{item}</li>)}</ul>
 				})
 
 			const toastId = toast.loading('Syncing media...', {
@@ -103,7 +104,7 @@ export default function Stations() {
 
 			} catch (err) {
 				return toast.error('Failed to sync media', {
-					description: err.message,
+					description: err instanceof Error ? err.message : 'Unknown error',
 					descriptionClassName: 'opacity-60 text-xs',
 					position: 'bottom-right'
 				})
@@ -112,7 +113,7 @@ export default function Stations() {
 			}
 
 		} catch (err) {
-			toast.error('Failed to open folder', {description: err.message})
+			toast.error('Failed to open folder', {description: err instanceof Error ? err.message : 'Unknown error'})
 		}
 
 	}
@@ -152,7 +153,7 @@ export default function Stations() {
 						<SelectValue placeholder="Select station" />
 					</SelectTrigger>
 					<SelectContent>
-						{stations.map(item => (
+						{stations.map((item: Station) => (
 							<SelectItem key={item.id} value={item.id.toString()}>{item.name}</SelectItem>
 						))}
 					</SelectContent>
@@ -180,7 +181,7 @@ export default function Stations() {
 					</div>
 				}
 
-				{paths?.map(path =>
+				{paths?.map((path: string) =>
 					<div key={path} className="text-sm text-slate-600">
 						{path}
 					</div>
