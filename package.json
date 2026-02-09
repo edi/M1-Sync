@@ -1,14 +1,15 @@
 {
   "name": "m1-sync",
   "productName": "CloudSync",
-  "version": "1.0.0-beta",
+  "version": "1.0.0",
   "description": "MusicOne CloudSync Service",
   "packageManager": "pnpm@10.29.1",
   "private": true,
   "type": "module",
   "scripts": {
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "release": "node scripts/release.mjs"
   },
   "dependencies": {
     "@tailwindcss/forms": "^0.5.11",

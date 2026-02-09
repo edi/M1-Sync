@@ -6,13 +6,38 @@ on:
       - 'v*'
 
 jobs:
-  release:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --draft \
+            --title "${{ github.ref_name }}" \
+            --notes "See the assets for download links."
+
+  build:
+    needs: create-release
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, windows-latest]
+        include:
+          - platform: macos-latest
+            args: '--target aarch64-apple-darwin'
+            label: 'macOS-Apple-Silicon'
+          - platform: macos-latest
+            args: '--target x86_64-apple-darwin'
+            label: 'macOS-Intel'
+          - platform: windows-latest
+            args: ''
+            label: 'Windows-x64'
     runs-on: ${{ matrix.platform }}
 
     steps:
@@ -27,10 +52,14 @@ jobs:
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
 
       - run: pnpm install
 
-      - uses: tauri-apps/tauri-action@v0
+      - name: Build with Tauri
+        id: build
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -40,9 +69,107 @@ jobs:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
           VITE_WSS_URL: ${{ vars.VITE_WSS_URL }}
         with:
-          tagName: v__VERSION__
-          releaseName: v__VERSION__
-          releaseBody: 'See the assets for download links.'
-          releaseDraft: true
-          prerelease: false
-          includeUpdaterJson: true
+          args: ${{ matrix.args }}
+
+      - name: Rename and upload artifacts
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+          LABEL="${{ matrix.label }}"
+          ARTIFACTS='${{ steps.build.outputs.artifactPaths }}'
+
+          echo "$ARTIFACTS" | jq -r '.[]' | while read -r artifact; do
+            filename=$(basename "$artifact")
+            new_name=""
+
+            case "$filename" in
+              *.dmg.sig)
+                new_name="M1-Sync-${VERSION}-${LABEL}.dmg.sig"
+                ;;
+              *.dmg)
+                new_name="M1-Sync-${VERSION}-${LABEL}.dmg"
+                ;;
+              *.app.tar.gz.sig)
+                new_name="M1-Sync-${VERSION}-${LABEL}.app.tar.gz.sig"
+                ;;
+              *.app.tar.gz)
+                new_name="M1-Sync-${VERSION}-${LABEL}.app.tar.gz"
+                ;;
+              *-setup.exe.sig)
+                new_name="M1-Sync-${VERSION}-${LABEL}-Setup.exe.sig"
+                ;;
+              *-setup.exe)
+                new_name="M1-Sync-${VERSION}-${LABEL}-Setup.exe"
+                ;;
+              *)
+                new_name="$filename"
+                ;;
+            esac
+
+            dir=$(dirname "$artifact")
+            if [ "$new_name" != "$filename" ]; then
+              mv "$artifact" "${dir}/${new_name}"
+            fi
+            gh release upload "$TAG" "${dir}/${new_name}" --clobber
+          done
+
+  updater-json:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Generate updater JSON
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+          REPO="${{ github.repository }}"
+          BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
+
+          mkdir -p sigs
+          gh release download "$TAG" -R "$REPO" --pattern "*.sig" --dir ./sigs
+
+          MACOS_AARCH64_SIG=$(cat "./sigs/M1-Sync-${VERSION}-macOS-Apple-Silicon.app.tar.gz.sig")
+          MACOS_X64_SIG=$(cat "./sigs/M1-Sync-${VERSION}-macOS-Intel.app.tar.gz.sig")
+          WIN_NSIS_SIG=$(cat "./sigs/M1-Sync-${VERSION}-Windows-x64-Setup.exe.sig")
+
+          cat > latest.json << ENDOFJSON
+          {
+            "version": "${VERSION}",
+            "notes": "See the assets for download links.",
+            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
+            "platforms": {
+              "darwin-aarch64": {
+                "signature": "${MACOS_AARCH64_SIG}",
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-macOS-Apple-Silicon.app.tar.gz"
+              },
+              "darwin-aarch64-app": {
+                "signature": "${MACOS_AARCH64_SIG}",
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-macOS-Apple-Silicon.app.tar.gz"
+              },
+              "darwin-x86_64": {
+                "signature": "${MACOS_X64_SIG}",
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-macOS-Intel.app.tar.gz"
+              },
+              "darwin-x86_64-app": {
+                "signature": "${MACOS_X64_SIG}",
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-macOS-Intel.app.tar.gz"
+              },
+              "windows-x86_64": {
+                "signature": "${WIN_NSIS_SIG}",
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-x64-Setup.exe"
+              },
+              "windows-x86_64-nsis": {
+                "signature": "${WIN_NSIS_SIG}",
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-x64-Setup.exe"
+              }
+            }
+          }
+          ENDOFJSON
+
+          gh release upload "$TAG" latest.json --clobber
