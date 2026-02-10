@@ -1,6 +1,6 @@
 [package]
 name = "m1-sync"
-version = "1.1.5"
+version = "1.2.0"
 description = "MusicOne Cloud - Media syncing service"
 authors = ["Edi Duluman"]
 edition = "2024"
