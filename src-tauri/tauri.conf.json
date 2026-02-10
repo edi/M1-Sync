@@ -15,7 +15,8 @@
         "title": "MusicOne CloudSync",
         "width": 800,
         "height": 600,
-        "resizable": false
+        "resizable": false,
+        "visible": false
       }
     ],
     "security": {

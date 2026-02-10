@@ -29,7 +29,7 @@ pub fn run() {
 
 	builder
 		.setup(|app| {
-			app.handle().plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))?;
+			app.handle().plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--minimized"])))?;
 			app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
 
 			// build tray menu
@@ -64,6 +64,15 @@ pub fn run() {
 					_ => {}
 				})
 				.build(app)?;
+
+			// show the window unless launched via autostart with --minimized
+			let minimized = std::env::args().any(|a| a == "--minimized");
+			if minimized {
+				#[cfg(target_os = "macos")]
+				let _ = app.set_activation_policy(ActivationPolicy::Accessory);
+			} else if let Some(window) = app.get_webview_window("main") {
+				let _ = window.show();
+			}
 
 			Ok(())
 		})
