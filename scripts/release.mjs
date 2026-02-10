@@ -35,10 +35,11 @@ if (bump === "rc") {
   newVersion = `${nextPatch}-rc${rcNumber}`;
   tagVersion = newVersion;
 } else {
+  const isRC = /-rc\d+$/.test(currentVersion);
   newVersion =
     bump === "major" ? `${major + 1}.0.0` :
     bump === "minor" ? `${major}.${minor + 1}.0` :
-    `${major}.${minor}.${patch + 1}`;
+    isRC ? baseVersion : `${major}.${minor}.${patch + 1}`;
   tagVersion = newVersion;
 }
 
