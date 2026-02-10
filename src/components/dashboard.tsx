@@ -1,9 +1,10 @@
 import {NavLink, Outlet, useLocation, useNavigate} from 'react-router-dom'
 import {fetch as fetchStations} from '@/lib/stations'
 import {useStationsStore} from '@/store/stations'
+import {useRelayStore} from '@/store/relay'
 import {cn, APP_TITLE} from '@/lib/utils'
-import {useAuthStore} from '@/store/auth'
 import {signOut} from '@/lib/auth'
+import {useEffect} from 'react'
 import logo from '/icon.svg'
 
 import {
@@ -14,13 +15,53 @@ import {
 	LoaderCircle,
 } from 'lucide-react'
 
+const badgeConfig = {
+	connected: {color: 'bg-green-500', label: 'Connected'},
+	connecting: {color: 'bg-orange-400 animate-pulse', label: 'Connecting...'},
+	disconnected: {color: 'bg-red-500', label: 'Disconnected'},
+} as const
+
+function RelayBadge() {
+	const status = useRelayStore(state => state.status)
+	const {color} = badgeConfig[status]
+
+	return (
+		<button
+			className={cn('absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-gray-200', color, status === 'disconnected' && 'cursor-pointer')}
+			onClick={() => status === 'disconnected' && useRelayStore.getState().connect()}
+		/>
+	)
+}
+
+function RelayLabel() {
+	const status = useRelayStore(state => state.status)
+	const {label} = badgeConfig[status]
+
+	return (
+		<p
+			className={cn('text-sm overflow-hidden text-ellipsis whitespace-nowrap', status === 'disconnected' ? 'text-red-500 cursor-pointer' : 'text-gray-500')}
+			onClick={() => status === 'disconnected' && useRelayStore.getState().connect()}
+		>
+			{label}
+		</p>
+	)
+}
+
 export default function Dashboard() {
 
 	const navigate = useNavigate()
 	const location = useLocation()
 
 	const {loading} = useStationsStore(state => state)
-	const name = useAuthStore(state => state.name)
+	const selectedStationId = useStationsStore(state => state.selectedStationId)
+
+	// connect to relay when station is selected, reconnect on station change
+	useEffect(() => {
+		if (!selectedStationId) return
+		useRelayStore.getState().disconnect()
+		useRelayStore.getState().connect()
+		return () => useRelayStore.getState().disconnect()
+	}, [selectedStationId])
 
 	return (
 		<div className="flex h-full">
@@ -29,14 +70,15 @@ export default function Dashboard() {
 			<div className="flex w-[240px] flex-col gap-y-5 bg-gray-200 p-4">
 
 				<div className="flex items-center space-x-4" id="drag-region">
-					<img alt="" className="h-10 w-auto" src={logo} />
+					<div className="relative">
+						<img alt="" className="h-10 w-auto" src={logo} />
+						<RelayBadge />
+					</div>
 					<div className="min-w-0">
 						<h2 className="text-md font-bold tracking-tight text-gray-900">
 							{APP_TITLE.split(' ')[0]}
 						</h2>
-						<p className="text-sm text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
-							{name}
-						</p>
+						<RelayLabel />
 					</div>
 				</div>
 
