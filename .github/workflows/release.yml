@@ -194,8 +194,8 @@ jobs:
 
           MACOS_AARCH64_SIG=$(cat "./sigs/M1-Sync-${VERSION}-macOS-Apple-Silicon.app.tar.gz.sig")
           MACOS_X64_SIG=$(cat "./sigs/M1-Sync-${VERSION}-macOS-Intel.app.tar.gz.sig")
-          WIN_X64_MSI_SIG=$(cat "./sigs/M1-Sync-${VERSION}-Windows-x64.msi.zip.sig")
-          WIN_ARM64_MSI_SIG=$(cat "./sigs/M1-Sync-${VERSION}-Windows-ARM64.msi.zip.sig")
+          WIN_X64_MSI_SIG=$(cat "./sigs/M1-Sync-${VERSION}-Windows-x64.msi.sig")
+          WIN_ARM64_MSI_SIG=$(cat "./sigs/M1-Sync-${VERSION}-Windows-ARM64.msi.sig")
 
           cat > latest.json << ENDOFJSON
           {
@@ -221,19 +221,19 @@ jobs:
               },
               "windows-x86_64": {
                 "signature": "${WIN_X64_MSI_SIG}",
-                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-x64.msi.zip"
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-x64.msi"
               },
               "windows-x86_64-msi": {
                 "signature": "${WIN_X64_MSI_SIG}",
-                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-x64.msi.zip"
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-x64.msi"
               },
               "windows-aarch64": {
                 "signature": "${WIN_ARM64_MSI_SIG}",
-                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-ARM64.msi.zip"
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-ARM64.msi"
               },
               "windows-aarch64-msi": {
                 "signature": "${WIN_ARM64_MSI_SIG}",
-                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-ARM64.msi.zip"
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-ARM64.msi"
               }
             }
           }
