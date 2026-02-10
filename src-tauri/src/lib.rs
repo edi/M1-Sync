@@ -9,9 +9,10 @@ pub fn run() {
 	{
 		// focus on active window
 		builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-			let _ = app.get_webview_window("main")
-				.expect("no main window")
-				.set_focus();
+			if let Some(window) = app.get_webview_window("main") {
+				let _ = window.unminimize();
+				let _ = window.set_focus();
+			}
 		}));
 	}
 
@@ -23,6 +24,7 @@ pub fn run() {
 		})
 		.plugin(tauri_plugin_opener::init())
 		.plugin(tauri_plugin_dialog::init())
+		.plugin(tauri_plugin_prevent_default::debug())
 		.plugin(tauri_plugin_clipboard_manager::init())
 		.plugin(tauri_plugin_store::Builder::new().build())
 		.run(tauri::generate_context!())
