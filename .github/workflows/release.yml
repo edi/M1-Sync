@@ -98,7 +98,7 @@ jobs:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
         run: |
           mkdir -p ~/private_keys
-          echo -n "$APPLE_API_KEY_CONTENT" | base64 --decode -o ~/private_keys/AuthKey_${APPLE_API_KEY}.p8
+          echo "$APPLE_API_KEY_CONTENT" > ~/private_keys/AuthKey_${APPLE_API_KEY}.p8
 
       - name: Build with Tauri
         id: build
