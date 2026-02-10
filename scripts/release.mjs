@@ -9,14 +9,17 @@ if (!["patch", "minor", "major", "rc"].includes(bump)) {
 
 // Read current version from tauri.conf.json (source of truth)
 const tauriConf = JSON.parse(readFileSync("src-tauri/tauri.conf.json", "utf-8"));
-const [major, minor, patch] = tauriConf.version.split(".").map(Number);
+const currentVersion = tauriConf.version;
+const baseVersion = currentVersion.replace(/-rc\d+$/, "");
+const [major, minor, patch] = baseVersion.split(".").map(Number);
 
 let newVersion;
 let tagVersion;
 
 if (bump === "rc") {
-  // Determine the next patch version for the RC
-  const nextPatch = `${major}.${minor}.${patch + 1}`;
+  // If already on an RC, use the same base version; otherwise bump patch
+  const isRC = /-rc\d+$/.test(currentVersion);
+  const nextPatch = isRC ? baseVersion : `${major}.${minor}.${patch + 1}`;
 
   // Find existing RC tags for this version to determine the next RC number
   const existingTags = execSync(`git tag --list "v${nextPatch}-rc*"`, { encoding: "utf-8" }).trim();
