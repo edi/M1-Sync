@@ -146,17 +146,17 @@ jobs:
               *.app.tar.gz)
                 new_name="M1-Sync-${VERSION}-${LABEL}.app.tar.gz"
                 ;;
-              *.nsis.zip.sig)
-                new_name="M1-Sync-${VERSION}-${LABEL}-Setup.nsis.zip.sig"
+              *.msi.zip.sig)
+                new_name="M1-Sync-${VERSION}-${LABEL}.msi.zip.sig"
                 ;;
-              *.nsis.zip)
-                new_name="M1-Sync-${VERSION}-${LABEL}-Setup.nsis.zip"
+              *.msi.zip)
+                new_name="M1-Sync-${VERSION}-${LABEL}.msi.zip"
                 ;;
-              *-setup.exe.sig)
-                new_name="M1-Sync-${VERSION}-${LABEL}-Setup.exe.sig"
+              *.msi.sig)
+                new_name="M1-Sync-${VERSION}-${LABEL}.msi.sig"
                 ;;
-              *-setup.exe)
-                new_name="M1-Sync-${VERSION}-${LABEL}-Setup.exe"
+              *.msi)
+                new_name="M1-Sync-${VERSION}-${LABEL}.msi"
                 ;;
               *)
                 new_name="$filename"
@@ -194,8 +194,8 @@ jobs:
 
           MACOS_AARCH64_SIG=$(cat "./sigs/M1-Sync-${VERSION}-macOS-Apple-Silicon.app.tar.gz.sig")
           MACOS_X64_SIG=$(cat "./sigs/M1-Sync-${VERSION}-macOS-Intel.app.tar.gz.sig")
-          WIN_NSIS_SIG=$(cat "./sigs/M1-Sync-${VERSION}-Windows-x64-Setup.exe.sig")
-          WIN_ARM64_NSIS_SIG=$(cat "./sigs/M1-Sync-${VERSION}-Windows-ARM64-Setup.exe.sig")
+          WIN_X64_MSI_SIG=$(cat "./sigs/M1-Sync-${VERSION}-Windows-x64.msi.zip.sig")
+          WIN_ARM64_MSI_SIG=$(cat "./sigs/M1-Sync-${VERSION}-Windows-ARM64.msi.zip.sig")
 
           cat > latest.json << ENDOFJSON
           {
@@ -220,20 +220,20 @@ jobs:
                 "url": "${BASE_URL}/M1-Sync-${VERSION}-macOS-Intel.app.tar.gz"
               },
               "windows-x86_64": {
-                "signature": "${WIN_NSIS_SIG}",
-                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-x64-Setup.exe"
+                "signature": "${WIN_X64_MSI_SIG}",
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-x64.msi.zip"
               },
-              "windows-x86_64-nsis": {
-                "signature": "${WIN_NSIS_SIG}",
-                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-x64-Setup.exe"
+              "windows-x86_64-msi": {
+                "signature": "${WIN_X64_MSI_SIG}",
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-x64.msi.zip"
               },
               "windows-aarch64": {
-                "signature": "${WIN_ARM64_NSIS_SIG}",
-                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-ARM64-Setup.exe"
+                "signature": "${WIN_ARM64_MSI_SIG}",
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-ARM64.msi.zip"
               },
-              "windows-aarch64-nsis": {
-                "signature": "${WIN_ARM64_NSIS_SIG}",
-                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-ARM64-Setup.exe"
+              "windows-aarch64-msi": {
+                "signature": "${WIN_ARM64_MSI_SIG}",
+                "url": "${BASE_URL}/M1-Sync-${VERSION}-Windows-ARM64.msi.zip"
               }
             }
           }
