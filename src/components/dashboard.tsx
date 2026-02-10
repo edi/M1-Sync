@@ -76,7 +76,7 @@ export default function Dashboard() {
 					</div>
 					<div className="min-w-0">
 						<h2 className="text-md font-bold tracking-tight text-gray-900">
-							{APP_TITLE.split(' ')[0]}
+							{APP_TITLE.split(' ')[1]}
 						</h2>
 						<RelayLabel />
 					</div>

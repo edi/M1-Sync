@@ -47,6 +47,24 @@ export const useRelayStore = create<RelayState>()(
 				set({status: 'connected', socket: ws})
 			}
 
+			ws.onmessage = (event) => {
+				try {
+					const message = JSON.parse(event.data)
+					if (message.type === 'update-available') {
+						import('@tauri-apps/plugin-updater').then(async ({check}) => {
+							const update = await check()
+							if (update) {
+								const {relaunch} = await import('@tauri-apps/plugin-process')
+								await update.downloadAndInstall()
+								await relaunch()
+							}
+						}).catch(() => {})
+					}
+				} catch {
+					// ignore non-JSON messages
+				}
+			}
+
 			ws.onclose = () => {
 				set({status: failures < MAX_FAILURES ? 'connecting' : 'disconnected', socket: null})
 				scheduleReconnect(get().connect)

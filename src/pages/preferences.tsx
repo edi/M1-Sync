@@ -1,16 +1,23 @@
 import Toggle from '@/components/ui/toggle'
-import {RefreshCcwDot} from 'lucide-react'
+import {RefreshCcwDot, Download, Check} from 'lucide-react'
 import {useState, useEffect} from 'react'
 import {getVersion} from '@tauri-apps/api/app'
-import {isEnabled} from '@tauri-apps/plugin-autostart'
+import {enable, disable, isEnabled} from '@tauri-apps/plugin-autostart'
 import {check} from '@tauri-apps/plugin-updater'
+import {relaunch} from '@tauri-apps/plugin-process'
+import {load} from '@tauri-apps/plugin-store'
+import {toast} from 'sonner'
+
+type UpdateStatus = 'idle' | 'checking' | 'downloading' | 'up-to-date' | 'error'
 
 interface PreferencesState {
 	autoStartup: boolean
 	autoUpdate: boolean
 	appVersion: string | null
-	isChecking: boolean
+	updateStatus: UpdateStatus
 }
+
+const getStore = () => load('settings.json', {autoSave: true, defaults: {}})
 
 export default function Preferences() {
 
@@ -18,7 +25,7 @@ export default function Preferences() {
 		autoStartup: false,
 		autoUpdate: true,
 		appVersion: null,
-		isChecking: false
+		updateStatus: 'idle'
 	})
 
 	const setState = (data: Partial<PreferencesState>) => changeState(prevState => ({...prevState, ...data}))
@@ -26,37 +33,100 @@ export default function Preferences() {
 	useEffect(() => {
 
 		const init = async () => {
-			const [appVersion, autoStartup] = await Promise.all([
+			const store = await getStore()
+			const [appVersion, autoStartup, autoUpdate] = await Promise.all([
 				getVersion(),
-				isEnabled()
+				isEnabled(),
+				store.get<boolean>('autoUpdate')
 			])
-			setState({appVersion, autoStartup})
+			setState({
+				appVersion,
+				autoStartup,
+				autoUpdate: autoUpdate ?? true
+			})
+
+			// silent auto-check on mount if enabled
+			if (autoUpdate !== false) {
+				try {
+					const update = await check()
+					if (update) {
+						toast.info(`Update v${update.version} available, downloading...`)
+						await update.downloadAndInstall()
+						await relaunch()
+					}
+				} catch {
+					// silent fail for auto-check
+				}
+			}
 		}
 
 		init()
 
 	}, [])
 
+	const onToggleAutostart = async () => {
+		if (state.autoStartup) {
+			await disable()
+		} else {
+			await enable()
+		}
+		setState({autoStartup: await isEnabled()})
+	}
+
+	const onToggleAutoUpdate = async () => {
+		const newValue = !state.autoUpdate
+		const store = await getStore()
+		await store.set('autoUpdate', newValue)
+		setState({autoUpdate: newValue})
+	}
+
 	const onCheckForUpdates = async () => {
 
-		if (state.isChecking)
+		if (state.updateStatus === 'checking' || state.updateStatus === 'downloading')
 			return false
 
-		setState({isChecking: true})
+		setState({updateStatus: 'checking'})
 
 		try {
 			const update = await check()
 			if (update) {
-				await update.downloadAndInstall()
+				setState({updateStatus: 'downloading'})
+				await update.downloadAndInstall((event) => {
+					if (event.event === 'Finished') {
+						toast.success('Update downloaded, restarting...')
+					}
+				})
+				await relaunch()
+			} else {
+				setState({updateStatus: 'up-to-date'})
+				toast.info('No updates available')
+				setTimeout(() => setState({updateStatus: 'idle'}), 3000)
 			}
 		} catch {
-			// do nothing
+			setState({updateStatus: 'error'})
+			toast.error('Error checking for updates')
+			setTimeout(() => setState({updateStatus: 'idle'}), 3000)
 		}
 
-		setTimeout(() => {
-			setState({isChecking: false})
-		}, 1500)
+	}
 
+	const updateButtonLabel = () => {
+		switch (state.updateStatus) {
+			case 'checking': return 'Checking...'
+			case 'downloading': return 'Downloading...'
+			case 'up-to-date': return 'Up to date'
+			case 'error': return 'Error'
+			default: return 'Check for updates'
+		}
+	}
+
+	const updateButtonIcon = () => {
+		switch (state.updateStatus) {
+			case 'checking': return <RefreshCcwDot className="w-4 h-4 animate-spin" />
+			case 'downloading': return <Download className="w-4 h-4 animate-pulse" />
+			case 'up-to-date': return <Check className="w-4 h-4 text-green-600" />
+			default: return null
+		}
 	}
 
 	return (
@@ -79,15 +149,15 @@ export default function Preferences() {
 					<Toggle
 						label="Start on login"
 						enabled={state.autoStartup}
-						onChange={() => setState({autoStartup: !state.autoStartup})}
+						onChange={onToggleAutostart}
 						description="Automatically start the app when you log in"
 					/>
 
 					{/* AUTO UPDATES */}
 					<Toggle
-						disabled={true}
 						label="Automatic updates"
 						enabled={state.autoUpdate}
+						onChange={onToggleAutoUpdate}
 						description="Keep the app up to date by installing all updates automatically"
 					/>
 
@@ -98,12 +168,12 @@ export default function Preferences() {
 							<p className="text-sm text-gray-500">{state.appVersion ? `v${state.appVersion}` : 'loading ...'}</p>
 						</div>
 						<button
-							disabled={state.isChecking}
+							disabled={state.updateStatus === 'checking' || state.updateStatus === 'downloading'}
 							onClick={onCheckForUpdates}
 							className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-gray-100 focus:ring-offset-2 disabled:opacity-75 disabled:pointer-events-none"
 						>
-							{state.isChecking && <RefreshCcwDot className="w-4 h-4 animate-spin" />}
-							{state.isChecking ? 'Checking' : 'Check for updates'}
+							{updateButtonIcon()}
+							{updateButtonLabel()}
 						</button>
 					</div>
 
