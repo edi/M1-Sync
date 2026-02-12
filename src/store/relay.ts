@@ -1,6 +1,5 @@
 import {create} from 'zustand'
 import {useAuthStore} from './auth'
-import {useStationsStore} from './stations'
 
 type RelayStatus = 'connecting' | 'connected' | 'disconnected'
 
@@ -33,12 +32,9 @@ export const useRelayStore = create<RelayState>()(
 			const token = useAuthStore.getState().accessToken
 			if (!token) return
 
-			const stationId = useStationsStore.getState().selectedStationId
-			if (!stationId) return
-
 			set({status: 'connecting'})
 
-			const ws = new WebSocket(`${relayUrl}?clientType=sync&stationId=${stationId}`)
+			const ws = new WebSocket(`${relayUrl}?clientType=sync`)
 
 			ws.onopen = () => {
 				// send auth as first message

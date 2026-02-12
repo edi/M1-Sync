@@ -1,7 +1,7 @@
 import {useStationsStore} from '@/store/stations'
 import {toast} from 'sonner'
 import {api} from './utils'
-import type {StationsListResponse, SyncPathsResponse} from '@/types'
+import type {StationsListResponse, StationPreferencesResponse} from '@/types'
 
 export const fetch = async () => {
 
@@ -27,38 +27,27 @@ export const fetch = async () => {
 
 }
 
-export const syncPaths = async (data: {stationId: number | null; newPath: string}) => {
+export const saveExportPath = async (data: {stationId: number; exportPath: string | null}) => {
 
 	try {
 
-		// set syncing
-		useStationsStore.setState({
-			loading: true,
-			syncing: true
-		})
+		useStationsStore.setState({loading: true})
 
-		// sync paths
-		const response = await api.post('stations/sync', {json: {data}}).json<SyncPathsResponse>()
+		const response = await api.post('stations/preferences', {json: data}).json<StationPreferencesResponse>()
 
 		if (response.error)
 			throw new Error(response.error)
 
-		// set paths
-		if (response.paths && Array.isArray(response.paths) && response.paths.length)
-			useStationsStore.getState().setPaths(response.paths)
+		useStationsStore.getState().setExportPath(data.stationId, data.exportPath)
 
-		// return response
 		return {success: true} as const
 
 	} catch (err) {
-		const message = err instanceof Error ? err.message : 'Failed to sync paths'
+		const message = err instanceof Error ? err.message : 'Failed to save export path'
 		toast.error(message, {position: 'bottom-right'})
 		return {error: message} as const
 	} finally {
-		useStationsStore.setState({
-			loading: false,
-			syncing: false
-		})
+		useStationsStore.setState({loading: false})
 	}
 
 }

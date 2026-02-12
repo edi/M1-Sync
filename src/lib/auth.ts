@@ -1,6 +1,6 @@
 import {useAuthStore} from '@/store/auth'
 import {resetAllStores} from '@/store'
-import {api} from '@/lib/utils'
+import {api, sleep} from '@/lib/utils'
 import {load} from '@tauri-apps/plugin-store'
 import type {LoginResponse, SessionCodeResponse} from '@/types'
 
@@ -87,29 +87,42 @@ export const signInUsingCredentials = async (fields: {email: string; password: s
 }
 
 /**
- * Validate access token
+ * Validate access token with exponential backoff
  * @returns {Promise<Object>}
  */
 export const validateAccessToken = async () => {
 
-	// check jwt
-	const response = await api.get('token/verify').json<LoginResponse>()
+	const maxDelay = 30_000
+	let delay = 1_000
 
-	if (response.error)
-		return response.error
+	while (true) {
 
-	// update state
-	useAuthStore.setState(response)
+		try {
 
-	try {
-		if (response.accessToken)
-			await saveToken(response.accessToken)
-	} catch (err) {
-		console.error(err)
-		return null
+			const response = await api.get('token/verify', {retry: 0}).json<LoginResponse>()
+
+			if (response.error)
+				return response.error
+
+			// update state
+			useAuthStore.setState(response)
+
+			try {
+				if (response.accessToken)
+					await saveToken(response.accessToken)
+			} catch (err) {
+				console.error(err)
+				return null
+			}
+
+			return response
+
+		} catch {
+			await sleep(delay)
+			delay = Math.min(delay * 2, maxDelay)
+		}
+
 	}
-
-	return response
 
 }
 

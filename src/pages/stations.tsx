@@ -1,19 +1,18 @@
 import {useStationsStore} from '@/store/stations'
-import {cn} from '@/lib/utils'
 import {useEffect} from 'react'
 import {toast} from 'sonner'
 import {open} from '@tauri-apps/plugin-dialog'
 import type {Station} from '@/types'
 
 import {
-	syncPaths,
+	saveExportPath,
 	fetch as fetchStations
 } from '@/lib/stations'
 
 import {
 	Frown,
-	RefreshCw,
-	FolderSearch
+	Pencil,
+	X
 } from 'lucide-react'
 
 import {
@@ -24,101 +23,90 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+
 export default function Stations() {
 
-	const paths = useStationsStore(state => state.paths)
 	const stations = useStationsStore(state => state.list)
 	const loading = useStationsStore(state => state.loading)
-	const syncing = useStationsStore(state => state.syncing)
 	const selectStation = useStationsStore(state => state.selectStation)
 	const selectedStationId = useStationsStore(state => state.selectedStationId)
+
+	const selectedStation = stations.find(s => s.id === selectedStationId)
 
 	useEffect(() => {
 		if (!stations.length)
 			fetchStations()
 	}, [])
 
-	const onOpenFolder = async (pathname: string | null = null) => {
+	const onOpenFolder = async () => {
 
-		if (syncing)
-			return false
+		if (!selectedStationId) return
 
 		try {
 
-			let newPath: string
+			const selected = await open({directory: true})
 
-			if (pathname) {
-				newPath = pathname
-			} else {
+			if (!selected)
+				return
 
-				const selected = await open({directory: true})
-
-				if (!selected)
-					return false
-
-				newPath = selected
-
-			}
-
-			// check if path already exists
-			if (paths.includes(newPath))
-				return toast.warning('Path already synced', {position: 'bottom-right'})
-
-			// check if other parent paths include this path
-			const parentPaths = paths.filter((path: string) => newPath.includes(path))
-
-			if (parentPaths.length)
-				return toast.warning('Path already synced in parent path', {
-					position: 'bottom-right',
-					descriptionClassName: 'opacity-60 text-xs',
-					description: <ul>{parentPaths.map((item: string) => <li key={item}>{item}</li>)}</ul>
-				})
-
-			// check if other paths are included in this path
-			const subPaths = paths.filter((path: string) => path.includes(newPath))
-
-			if (subPaths.length)
-				toast.warning('The following sub-paths will be removed', {
-					position: 'bottom-right',
-					descriptionClassName: 'opacity-60 text-xs',
-					description: <ul>{subPaths.map((item: string) => <li key={item}>{item}</li>)}</ul>
-				})
-
-			const toastId = toast.loading('Syncing media...', {
-				description: newPath,
-				position: 'bottom-right',
-				descriptionClassName: 'opacity-60 text-xs'
+			const response = await saveExportPath({
+				stationId: selectedStationId,
+				exportPath: selected
 			})
 
-			try {
+			if ('error' in response)
+				throw new Error(response.error)
 
-				const response = await syncPaths({
-					stationId: selectedStationId,
-					newPath
-				})
-
-				if ('error' in response)
-					throw new Error(response.error)
-
-				toast.success('Media synced successfully', {position: 'bottom-right'})
-
-			} catch (err) {
-				return toast.error('Failed to sync media', {
-					description: err instanceof Error ? err.message : 'Unknown error',
-					descriptionClassName: 'opacity-60 text-xs',
-					position: 'bottom-right'
-				})
-			} finally {
-				toast.dismiss(toastId)
-			}
+			toast.success('Automation path saved', {position: 'bottom-right'})
 
 		} catch (err) {
-			toast.error('Failed to open folder', {description: err instanceof Error ? err.message : 'Unknown error'})
+			toast.error('Failed to save automation path', {
+				description: err instanceof Error ? err.message : 'Unknown error',
+				descriptionClassName: 'opacity-60 text-xs',
+				position: 'bottom-right'
+			})
 		}
 
 	}
 
-	if (loading && !syncing)
+	const onRemovePath = async () => {
+
+		if (!selectedStationId) return
+
+		try {
+
+			const response = await saveExportPath({
+				stationId: selectedStationId,
+				exportPath: null
+			})
+
+			if ('error' in response)
+				throw new Error(response.error)
+
+			toast.success('Automation path removed', {position: 'bottom-right'})
+
+		} catch (err) {
+			toast.error('Failed to remove automation path', {
+				description: err instanceof Error ? err.message : 'Unknown error',
+				descriptionClassName: 'opacity-60 text-xs',
+				position: 'bottom-right'
+			})
+		}
+
+	}
+
+	if (loading)
 		return (
 			<div className="p-4 bg-gray-100 grow">
 				<div className="p-3 space-y-4">
@@ -159,33 +147,40 @@ export default function Stations() {
 					</SelectContent>
 				</Select>
 
-				<div className="grow" />
-
-				<button disabled={loading} onClick={() => onOpenFolder()} className={cn("flex items-center gap-x-2 text-sm px-3 py-1.5 rounded-md transition-colors", loading ? 'bg-gray-200/80 text-gray-700/60' : 'bg-blue-200/80 text-blue-700/60 cursor-pointer hover:bg-blue-200')}>
-					<FolderSearch className="size-6" /> Add folder
-				</button>
-
-				{syncing &&
-					<button className="bg-slate-200 rounded-md px-2 py-1.5">
-						<RefreshCw className="size-6 animate-spin text-slate-400" />
-					</button>
-				}
-
 			</div>
 
-			<div className="p-4 bg-white ring-1 ring-slate-200 shadow-sm sm:rounded-lg max-w-full divide-y divide-gray-100">
+			<div className="p-4 bg-white ring-1 ring-slate-200 shadow-sm sm:rounded-lg max-w-full">
 
-				{!paths?.length &&
-					<div className="text-center text-gray-500" onClick={() => onOpenFolder()}>
-						No paths synced in this station, click <span className="p-1 rounded-md bg-gray-200 hover:bg-gray-300 cursor-pointer transition-colors">here</span> to to sync a folder.
+				{selectedStation?.exportPath
+					? <div className="flex items-center gap-x-2">
+						<div className="text-sm text-slate-600 grow">{selectedStation.exportPath}</div>
+						<button onClick={onOpenFolder} className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer transition-colors">
+							<Pencil className="size-3.5" />
+						</button>
+						<AlertDialog>
+							<AlertDialogTrigger asChild>
+								<button className="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 cursor-pointer transition-colors">
+									<X className="size-3.5" />
+								</button>
+							</AlertDialogTrigger>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>Remove automation path</AlertDialogTitle>
+									<AlertDialogDescription>
+										Are you sure you want to remove the automation export path for this station?
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>Cancel</AlertDialogCancel>
+									<AlertDialogAction onClick={onRemovePath}>Remove</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
+					</div>
+					: <div className="text-center text-gray-500 cursor-pointer" onClick={onOpenFolder}>
+						No automation path set for this station, click <span className="p-1 rounded-md bg-gray-200 hover:bg-gray-300 transition-colors">here</span> to select a folder.
 					</div>
 				}
-
-				{paths?.map((path: string) =>
-					<div key={path} className="text-sm text-slate-600">
-						{path}
-					</div>
-				)}
 
 			</div>
 

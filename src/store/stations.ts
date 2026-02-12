@@ -1,11 +1,9 @@
 import {create} from 'zustand'
 import type {StationsState, Station} from '@/types'
 
-const initialState: Omit<StationsState, 'initialize' | 'setPaths' | 'setStations' | 'selectStation' | 'getSelectedStation'> = {
+const initialState: Omit<StationsState, 'initialize' | 'setStations' | 'selectStation' | 'setExportPath' | 'getSelectedStation'> = {
 	list: [],
-	paths: [],
 	loading: true,
-	syncing: false,
 	selectedStationId: null
 }
 
@@ -39,11 +37,6 @@ export const useStationsStore = create<StationsState>(
 
 		},
 
-		// update paths list
-		setPaths: (paths: string[]) => {
-			set({paths})
-		},
-
 		// updates the stations list
 		setStations: (stations: Station[]) => {
 
@@ -61,6 +54,11 @@ export const useStationsStore = create<StationsState>(
 		selectStation: (stationId: number) => {
 			set({selectedStationId: stationId})
 			localStorage.setItem('selected-station', String(stationId))
+		},
+
+		// Set export path for a station
+		setExportPath: (stationId: number, exportPath: string | null) => {
+			set({list: get().list.map(s => s.id === stationId ? {...s, exportPath} : s)})
 		},
 
 		// Get the currently selected station

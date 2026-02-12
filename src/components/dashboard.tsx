@@ -53,15 +53,12 @@ export default function Dashboard() {
 	const location = useLocation()
 
 	const {loading} = useStationsStore(state => state)
-	const selectedStationId = useStationsStore(state => state.selectedStationId)
 
-	// connect to relay when station is selected, reconnect on station change
+	// connect to relay on mount
 	useEffect(() => {
-		if (!selectedStationId) return
-		useRelayStore.getState().disconnect()
 		useRelayStore.getState().connect()
 		return () => useRelayStore.getState().disconnect()
-	}, [selectedStationId])
+	}, [])
 
 	return (
 		<div className="flex h-full">

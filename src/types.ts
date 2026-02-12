@@ -1,6 +1,7 @@
 export interface Station {
 	id: number
 	name: string
+	exportPath: string | null
 }
 
 export interface AuthState {
@@ -16,14 +17,12 @@ export interface AuthState {
 
 export interface StationsState {
 	list: Station[]
-	paths: string[]
 	loading: boolean
-	syncing: boolean
 	selectedStationId: number | null
 	initialize: (list: Station[]) => void
-	setPaths: (paths: string[]) => void
 	setStations: (stations: Station[]) => void
 	selectStation: (stationId: number) => void
+	setExportPath: (stationId: number, exportPath: string | null) => void
 	getSelectedStation: () => Station | null
 }
 
@@ -45,8 +44,8 @@ export interface StationsListResponse {
 	error?: string
 }
 
-export interface SyncPathsResponse {
-	paths?: string[]
+export interface StationPreferencesResponse {
+	success?: boolean
 	error?: string
 }
 
