@@ -48,7 +48,9 @@ export const useRelayStore = create<RelayState>()(
 			ws.onmessage = (event) => {
 				try {
 					const message = JSON.parse(event.data)
-					if (message.type === 'update-available') {
+					if (message.type !== 'event') return
+
+					if (message.event === 'update-available') {
 						import('@tauri-apps/plugin-updater').then(async ({check}) => {
 							const update = await check()
 							if (update) {
@@ -59,9 +61,8 @@ export const useRelayStore = create<RelayState>()(
 						}).catch(() => {})
 					}
 
-					if (message.type === 'export') {
-						const payload = message.payload as ExportEvent
-						handleExport(payload).catch(() => {})
+					if (message.event === 'export-schedule') {
+						handleExport(message.payload as ExportEvent).catch(() => {})
 					}
 				} catch {
 					// ignore non-JSON messages
