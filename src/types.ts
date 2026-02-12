@@ -49,6 +49,13 @@ export interface StationPreferencesResponse {
 	error?: string
 }
 
+export interface ExportEvent {
+	path: string
+	directory: string | null
+	files: { filename: string; content: string }[]
+	stationId: number
+}
+
 export interface ToggleProps {
 	enabled: boolean
 	disabled?: boolean

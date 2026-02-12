@@ -1,5 +1,7 @@
 import {create} from 'zustand'
 import {useAuthStore} from './auth'
+import {exists, mkdir, writeTextFile} from '@tauri-apps/plugin-fs'
+import type {ExportEvent} from '@/types'
 
 type RelayStatus = 'connecting' | 'connected' | 'disconnected'
 
@@ -56,6 +58,11 @@ export const useRelayStore = create<RelayState>()(
 							}
 						}).catch(() => {})
 					}
+
+					if (message.type === 'export') {
+						const payload = message.payload as ExportEvent
+						handleExport(payload).catch(() => {})
+					}
 				} catch {
 					// ignore non-JSON messages
 				}
@@ -89,6 +96,21 @@ function scheduleReconnect(connect: () => void) {
 	failures++
 	const delay = Math.min(1000 * Math.pow(2, failures - 1), MAX_BACKOFF_MS)
 	reconnectTimer = setTimeout(connect, delay)
+}
+
+async function handleExport(payload: ExportEvent) {
+	const pathExists = await exists(payload.path)
+	if (!pathExists) return
+
+	let target = payload.path
+	if (payload.directory) {
+		target = `${payload.path}/${payload.directory}`
+		await mkdir(target, {recursive: true})
+	}
+
+	for (const file of payload.files) {
+		await writeTextFile(`${target}/${file.filename}`, file.content)
+	}
 }
 
 export const reset = () => {

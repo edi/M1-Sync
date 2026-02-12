@@ -15,6 +15,13 @@
     "autostart:allow-disable",
     "autostart:allow-is-enabled",
     "process:default",
-    "fs:default"
+    "fs:default",
+    "fs:allow-exists",
+    "fs:allow-mkdir",
+    "fs:allow-write-text-file",
+    {
+      "identifier": "fs:scope",
+      "allow": [{ "path": "/**" }]
+    }
   ]
 }
