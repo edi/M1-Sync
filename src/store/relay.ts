@@ -2,6 +2,7 @@ import {create} from 'zustand'
 import {useAuthStore} from './auth'
 import {useStationsStore} from './stations'
 import {exists, mkdir, writeTextFile} from '@tauri-apps/plugin-fs'
+import {join} from '@tauri-apps/api/path'
 import type {ExportEvent} from '@/types'
 
 type RelayStatus = 'connecting' | 'connected' | 'disconnected'
@@ -112,12 +113,12 @@ async function handleExport(payload: ExportEvent) {
 
 	let target = basePath
 	if (payload.directory) {
-		target = `${basePath}/${payload.directory}`
+		target = await join(basePath, payload.directory)
 		await mkdir(target, {recursive: true})
 	}
 
 	for (const file of payload.files) {
-		await writeTextFile(`${target}/${file.filename}`, file.content)
+		await writeTextFile(await join(target, file.filename), file.content)
 	}
 }
 
