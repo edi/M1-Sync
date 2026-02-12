@@ -50,7 +50,6 @@ export interface StationPreferencesResponse {
 }
 
 export interface ExportEvent {
-	path: string
 	directory: string | null
 	files: { filename: string; content: string }[]
 	stationId: number

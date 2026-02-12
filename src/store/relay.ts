@@ -1,5 +1,6 @@
 import {create} from 'zustand'
 import {useAuthStore} from './auth'
+import {useStationsStore} from './stations'
 import {exists, mkdir, writeTextFile} from '@tauri-apps/plugin-fs'
 import type {ExportEvent} from '@/types'
 
@@ -24,6 +25,7 @@ export const useRelayStore = create<RelayState>()(
 		socket: null,
 
 		connect: () => {
+
 			// prevent duplicate connections
 			const current = get().socket
 			if (current && current.readyState <= WebSocket.OPEN) return
@@ -100,12 +102,17 @@ function scheduleReconnect(connect: () => void) {
 }
 
 async function handleExport(payload: ExportEvent) {
-	const pathExists = await exists(payload.path)
+	const station = useStationsStore.getState().list.find(s => s.id === payload.stationId)
+	if (!station?.exportPath) return
+
+	const basePath = station.exportPath
+
+	const pathExists = await exists(basePath)
 	if (!pathExists) return
 
-	let target = payload.path
+	let target = basePath
 	if (payload.directory) {
-		target = `${payload.path}/${payload.directory}`
+		target = `${basePath}/${payload.directory}`
 		await mkdir(target, {recursive: true})
 	}
 
