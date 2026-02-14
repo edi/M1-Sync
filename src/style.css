@@ -110,10 +110,6 @@
   }
 }
 
-#drag-region {
-	-webkit-app-region: drag;
-}
-
 ::-webkit-scrollbar {
 	width: 0.5rem;
 }

@@ -3,7 +3,7 @@
   "productName": "MusicOne",
   "version": "1.4.0",
   "description": "MusicOne cloud sync service",
-  "packageManager": "pnpm@10.29.2",
+  "packageManager": "pnpm@10.29.3",
   "private": true,
   "type": "module",
   "scripts": {
@@ -37,12 +37,12 @@
   "devDependencies": {
     "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/cli": "^2.10.0",
-    "@tauri-apps/plugin-fs": "~2.4.5",
-    "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-autostart": "^2.5.1",
     "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
     "@tauri-apps/plugin-dialog": "^2.6.0",
+    "@tauri-apps/plugin-fs": "~2.4.5",
     "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-store": "^2.4.2",
     "@tauri-apps/plugin-updater": "^2.10.0",
     "@types/react": "^19.1.8",

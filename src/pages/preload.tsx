@@ -49,7 +49,7 @@ export default function Preload() {
 	useEffect(() => {
 
 		if (user.id)
-			navigate('/stations')
+			navigate('/station')
 
 	}, [user.id])
 

@@ -48,7 +48,7 @@ export default function Home() {
 	// user connected listener
 	useEffect(() => {
 		if (userId)
-			navigate('/stations')
+			navigate('/station')
 	}, [userId])
 
 	// request session code on page load

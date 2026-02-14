@@ -6,7 +6,7 @@ import {Toaster} from 'sonner'
 
 // pages
 import Preferences from './pages/preferences'
-import Stations from './pages/stations'
+import Station from './pages/station'
 import Preload from './pages/preload'
 import Connect from './pages/connect'
 
@@ -33,9 +33,9 @@ export default function App() {
 					{userId ?
 						<>
 							<Route path="/" element={<Dashboard />}>
-								<Route index element={<Stations />} />
-								<Route path="connect" element={<Stations />} />
-								<Route path="stations" element={<Stations />} />
+								<Route index element={<Station />} />
+								<Route path="connect" element={<Station />} />
+								<Route path="station" element={<Station />} />
 								<Route path="preferences" element={<Preferences />} />
 								<Route path="*" element={<NotFound />} />
 							</Route>

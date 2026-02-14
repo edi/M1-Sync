@@ -1,9 +1,10 @@
-import {create} from 'zustand'
-import {useAuthStore} from './auth'
-import {useStationsStore} from './stations'
 import {exists, mkdir, readFile, writeTextFile} from '@tauri-apps/plugin-fs'
+import {fetch as fetchStations} from '@/lib/stations'
+import {useStationsStore} from './stations'
 import {join} from '@tauri-apps/api/path'
 import type {ExportEvent} from '@/types'
+import {useAuthStore} from './auth'
+import {create} from 'zustand'
 
 type RelayStatus = 'connecting' | 'connected' | 'disconnected'
 
@@ -65,20 +66,24 @@ export const useRelayStore = create<RelayState>()(
 
 					if (message.type !== 'event') return
 
-					if (message.event === 'update-available') {
+					if (message.event === 'download-update') {
+
 						import('@tauri-apps/plugin-updater').then(async ({check}) => {
+
 							const update = await check()
+
 							if (update) {
 								const {relaunch} = await import('@tauri-apps/plugin-process')
 								await update.downloadAndInstall()
 								await relaunch()
 							}
+
 						}).catch(() => {})
+
+					} else if (message.event === 'refresh-stations') {
+						fetchStations()
 					}
 
-					if (message.event === 'export-schedule') {
-						handleExport(message.payload as ExportEvent).catch(() => {})
-					}
 				} catch {
 					// ignore non-JSON messages
 				}
@@ -121,13 +126,16 @@ async function handleRequest(ws: WebSocket, message: {requestId: string, event: 
 	const {requestId, event, payload} = message
 
 	if (event === 'stream:audio') {
+
 		const {path} = payload as {path: string}
+
 		if (!path) {
 			ws.send(JSON.stringify({type: 'response', requestId, payload: {error: 'missing_path'}}))
 			return
 		}
 
 		const fileExists = await exists(path)
+
 		if (!fileExists) {
 			ws.send(JSON.stringify({type: 'response', requestId, payload: {error: 'file_not_found'}}))
 			return
@@ -146,10 +154,25 @@ async function handleRequest(ws: WebSocket, message: {requestId: string, event: 
 			requestId,
 			payload: {data, mime, index: 0, total: 1, streaming: false}
 		}))
+
+		return
+
+	}
+
+	if (event === 'export-schedule') {
+		await handleExport(payload as ExportEvent)
+		ws.send(JSON.stringify({type: 'response', requestId, payload: {success: true}}))
 		return
 	}
 
-	ws.send(JSON.stringify({type: 'response', requestId, payload: {error: 'unknown_request_event'}}))
+	ws.send(JSON.stringify({
+		type: 'response',
+		requestId,
+		payload: {
+			error: 'unknown_request_event'
+		}
+	}))
+
 }
 
 function uint8ArrayToBase64(bytes: Uint8Array): string {
