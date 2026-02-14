@@ -1,7 +1,7 @@
 {
   "name": "m1-sync",
   "productName": "MusicOne",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "MusicOne cloud sync service",
   "packageManager": "pnpm@10.29.3",
   "private": true,
