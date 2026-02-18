@@ -127,7 +127,7 @@ async function handleRequest(ws: WebSocket, message: {requestId: string, event: 
 
 	if (event === 'stream:audio') {
 
-		const {path} = payload as {path: string}
+		const {path, chunkSize} = payload as {path: string, chunkSize?: number}
 
 		if (!path) {
 			ws.send(JSON.stringify({type: 'response', requestId, payload: {error: 'missing_path'}}))
@@ -146,7 +146,7 @@ async function handleRequest(ws: WebSocket, message: {requestId: string, event: 
 		const mime = ext === 'wav' ? 'audio/wav' : 'audio/mpeg'
 
 		// send only the first chunk (limit to 1 chunk for now)
-		const end = Math.min(STREAM_CHUNK_SIZE, bytes.length)
+		const end = Math.min(chunkSize ?? STREAM_CHUNK_SIZE, bytes.length)
 		const data = uint8ArrayToBase64(bytes.subarray(0, end))
 
 		ws.send(JSON.stringify({
