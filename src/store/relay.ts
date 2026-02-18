@@ -1,10 +1,13 @@
 import {exists, mkdir, readFile, writeTextFile} from '@tauri-apps/plugin-fs'
 import {fetch as fetchStations} from '@/lib/stations'
+import {relaunch} from '@tauri-apps/plugin-process'
+import {check} from '@tauri-apps/plugin-updater'
 import {useStationsStore} from './stations'
 import {join} from '@tauri-apps/api/path'
 import type {ExportEvent} from '@/types'
 import {useAuthStore} from './auth'
 import {create} from 'zustand'
+import {toast} from 'sonner'
 
 type RelayStatus = 'connecting' | 'connected' | 'disconnected'
 
@@ -50,7 +53,9 @@ export const useRelayStore = create<RelayState>()(
 			}
 
 			ws.onmessage = (event) => {
+
 				try {
+
 					const message = JSON.parse(event.data)
 
 					if (message.type === 'request' && message.requestId) {
@@ -68,17 +73,23 @@ export const useRelayStore = create<RelayState>()(
 
 					if (message.event === 'download-update') {
 
-						import('@tauri-apps/plugin-updater').then(async ({check}) => {
+						toast.promise(
+							(async () => {
+								const update = await check()
 
-							const update = await check()
+								if (update) {
+									await update.downloadAndInstall()
+									await relaunch()
+								}
 
-							if (update) {
-								const {relaunch} = await import('@tauri-apps/plugin-process')
-								await update.downloadAndInstall()
-								await relaunch()
+								return update
+							})(),
+							{
+								loading: 'checking for updates...',
+								success: (update) => update ? 'update found, downloading...' : 'no update available',
+								error: 'update check failed',
 							}
-
-						}).catch(() => {})
+						)
 
 					} else if (message.event === 'refresh-stations') {
 						fetchStations()
@@ -119,8 +130,16 @@ function scheduleReconnect(connect: () => void) {
 	reconnectTimer = setTimeout(connect, delay)
 }
 
-// ~3MB raw → ~4MB base64 per chunk, well within WS limits
+// ~3MB raw per chunk, well within WS limits
 const STREAM_CHUNK_SIZE = 3 * 1024 * 1024
+
+const MIME_MAP: Record<string, string> = {
+	wav: 'audio/wav',
+	bwf: 'audio/wav',
+	ogg: 'audio/ogg',
+	flac: 'audio/flac',
+	mp3: 'audio/mpeg',
+}
 
 async function handleRequest(ws: WebSocket, message: {requestId: string, event: string, payload: unknown}) {
 	const {requestId, event, payload} = message
@@ -142,18 +161,22 @@ async function handleRequest(ws: WebSocket, message: {requestId: string, event: 
 		}
 
 		const bytes = await readFile(path)
-		const ext = path.split('.').pop()?.toLowerCase()
-		const mime = ext === 'wav' ? 'audio/wav' : 'audio/mpeg'
+		const ext = path.split('.').pop()?.toLowerCase() ?? ''
+		const mime = MIME_MAP[ext] ?? 'audio/mpeg'
 
-		// send only the first chunk (limit to 1 chunk for now)
+		// send as binary frame: [4-byte header length][JSON header][raw audio]
 		const end = Math.min(chunkSize ?? STREAM_CHUNK_SIZE, bytes.length)
-		const data = uint8ArrayToBase64(bytes.subarray(0, end))
+		const audioData = bytes.subarray(0, end)
 
-		ws.send(JSON.stringify({
-			type: 'response',
-			requestId,
-			payload: {data, mime, index: 0, total: 1, streaming: false}
-		}))
+		const header = JSON.stringify({requestId, mime, index: 0, total: 1, streaming: false})
+		const headerBytes = new TextEncoder().encode(header)
+
+		const frame = new Uint8Array(4 + headerBytes.byteLength + audioData.byteLength)
+		new DataView(frame.buffer).setUint32(0, headerBytes.byteLength, false)
+		frame.set(headerBytes, 4)
+		frame.set(audioData, 4 + headerBytes.byteLength)
+
+		ws.send(frame.buffer)
 
 		return
 
@@ -173,16 +196,6 @@ async function handleRequest(ws: WebSocket, message: {requestId: string, event: 
 		}
 	}))
 
-}
-
-function uint8ArrayToBase64(bytes: Uint8Array): string {
-	const chunkSize = 0x8000
-	let binary = ''
-	for (let i = 0; i < bytes.length; i += chunkSize) {
-		const chunk = bytes.subarray(i, i + chunkSize)
-		binary += String.fromCharCode(...chunk)
-	}
-	return btoa(binary)
 }
 
 async function handleExport(payload: ExportEvent) {
